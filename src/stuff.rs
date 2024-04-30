@@ -4,25 +4,32 @@ use pipey::Pipey;
 use crate::syscall_bind;
 pub type void = ();
 
-#[macro_export]
-macro_rules! nil_ptr {
-    ($t:ty) => {
-        0 as *const $t
+// https://stackoverflow.com/questions/29963449/golang-like-defer-in-rust
+macro_rules! expr {
+    ($e: expr) => {
+        $e
     };
+} // tt hack
+#[macro_export]
+macro_rules! defer {
+    ($($data: tt)*) => (
+        let _scope_call = ScopeCall {
+            c: || -> () { expr!({ $($data)* }) }
+        };
+    )
 }
 
 extern "C" {
-    // dear rustc my beloved. you didnt see me deref this *const u8 which may actually be *const boobs cast as *const u8. with love
     pub fn shady_byte_deref(ptr: *const u8) -> u8;
     pub fn shady_ptr_inc(ptr: *const void);
 }
 
-pub fn very_safe_ptr_inc<T>(ptr: &mut *const T){
-    *ptr = ((*ptr as usize) + 1) as * const T
+pub fn very_safe_ptr_inc<T>(ptr: &mut *const T) {
+    *ptr = ((*ptr as usize) + 1) as *const T
 }
 
 #[no_mangle]
-pub extern "C" fn study_mut_refx(x: &mut usize){
+pub extern "C" fn study_mut_refx(x: &mut usize) {
     *x += 1;
 }
 
@@ -38,12 +45,12 @@ impl<T> IterPtrTilNil<T> {
     pub fn new(ptr: *const T) -> Self {
         IterPtrTilNil { ptr }
     }
-    pub fn inc(&mut self){
+    pub fn inc(&mut self) {
         very_safe_ptr_inc(&mut self.ptr)
     }
     /// current
-    pub fn wawa(&self) -> T{
-        unsafe {self.ptr.read()}
+    pub fn wawa(&self) -> T {
+        unsafe { self.ptr.read() }
     }
 }
 
@@ -67,29 +74,19 @@ impl<T> Iterator for IterPtrTilNil<T> {
                 self.ptr = self.ptr.offset(1);
                 Some(x)
             }*/
-            shady_byte_deref(self.ptr as *const u8).pipe(|pp| if 0 == pp {None} else {Some(self.ptr.read().btw(|| self.ptr = self.ptr.offset(1)))})
+            shady_byte_deref(self.ptr as *const u8).pipe(|pp| {
+                if 0 == pp {
+                    None
+                } else {
+                    Some(self.ptr.read().btw(|| self.ptr = self.ptr.offset(1)))
+                }
+            })
         }
     }
 }
 
 // currently used for debugging
 #[no_mangle]
-pub unsafe fn pstr(s: *const u8, size: usize){
+pub unsafe fn pstr(s: *const u8, size: usize) {
     syscall_bind::write(1, s, size);
 }
-
-#[no_mangle]
-pub fn print_str(s: &str){
-    unsafe {
-        pstr(s.as_ptr(), s.as_bytes().len())
-    }
-}
-
-// used for files. in case you have your heads up your ass
-#[repr(C)]
-pub struct File{
-    fd: u32,
-    flags: u32,
-    close: fn(*const File)
-}
-

@@ -13,5 +13,6 @@ int toascii(int);
 int abs(int);
 void exit(int);
 char* uitoa(char* str, unsigned int x);
+void test_panic();
 isize pstr(const char* s, usize size);
 usize strlen(const char *str);

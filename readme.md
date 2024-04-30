@@ -1,4 +1,4 @@
-## state: you can print text + shat my pants + seeing what i can use with -nostdlib
+## state: you can print text + shat my pants + implementing malloc
 
 ### notes for readers
 0. **do not set optimzation level to more than 0. my guess is that optimization are meant for bins**
@@ -42,8 +42,8 @@ fn wawa(){
     loop {}
 }
 ```
-### Restrictions
-1. **NO C IN MY FUCKING RUST LIBRARY**
+### balls
+1. minimal dependency on C libraries
 
 
 ### todos:
