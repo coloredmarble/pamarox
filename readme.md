@@ -1,15 +1,15 @@
-## state: you can print text + shat my pants + implementing malloc
+## state: you can print text + make inefficient slab list alloc + implementing merge malloc
 
 ### notes for readers
 0. **do not set optimzation level to more than 0. my guess is that optimization are meant for bins**
-1. asm functions sometimes work downwards to 0 (so i can use `test`)
+1. **compability with other libc is not a goal**
 2. when using build.sh/run.sh (i fucking suck at bash) make sure u r on the project root
 3. sometime the type may be different (returning bool as i32) and treating it as such (the difference is usually inconseqeuntial) **(correct me if im wrong)** 
 4. if you are interested in reading the source code. check out `src/ctypes.rs:toascii`
 5. never use llvm assembly. trust me
 6. expect a couple errors when using cargo check. its quiet quirky :3
-7. if you have any idea how to switch to a linux target without a libc. tell me
 8. [rust_eh_personality fix](https://stackoverflow.com/questions/75310867/rust-no-std-static-lib-panic-handler) in top answer's replies from Miaao
+7. if you have any idea how to switch to a linux target without a libc. tell me
 9. [miaao](https://stackoverflow.com/users/20028181/miiao) i fucking thank you 
 
 ### list of problems:
@@ -20,6 +20,7 @@
 5. dogshit llvm assembly syntax
 7. rust fucking hates `.btw`.
 8. any optimization turns the whole thing into shit
+9. had no fucking idea alignment matters because cpus can only read their size
 
 #### fix for `.btw` problem
 ```
@@ -47,6 +48,7 @@ fn wawa(){
 
 
 ### todos:
+0. fetch qword instead of byte
 1. impl more
 
 ### self notes:
@@ -60,3 +62,4 @@ fn wawa(){
 9. how many times can you xor?
 10. `test` is preferable over `cmp`
 11. play ace combat 4 > 5 > 0
+12. what the fuck is a vdso

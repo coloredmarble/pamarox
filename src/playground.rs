@@ -1,4 +1,5 @@
 use core::ptr::write_bytes;
+#[no_mangle]
 pub unsafe extern "C" fn uitoa(mut ptr: *mut u8, n: usize) -> *const u8{
     // fuck fancy formatting
     ptr = ptr.offset(9);

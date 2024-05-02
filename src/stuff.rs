@@ -1,10 +1,18 @@
-use core::ops::Index;
+use core::{mem::size_of, ops::Index};
 use pipey::Pipey;
 
 use crate::syscall_bind;
 pub type void = ();
 
 // https://stackoverflow.com/questions/29963449/golang-like-defer-in-rust
+struct ClosureDefer<F: FnOnce()> {
+    c: Option<F>,
+}
+impl<F: FnOnce()> Drop for ClosureDefer<F> {
+    fn drop(&mut self) {
+        self.c.take().unwrap()()
+    }
+}
 macro_rules! expr {
     ($e: expr) => {
         $e
@@ -13,7 +21,7 @@ macro_rules! expr {
 #[macro_export]
 macro_rules! defer {
     ($($data: tt)*) => (
-        let _scope_call = ScopeCall {
+        let _scope_call = ClosureDefer {
             c: || -> () { expr!({ $($data)* }) }
         };
     )
@@ -25,7 +33,11 @@ extern "C" {
 }
 
 pub fn very_safe_ptr_inc<T>(ptr: &mut *const T) {
-    *ptr = ((*ptr as usize) + 1) as *const T
+    *ptr = (ptr.addr() + size_of::<T>()) as *const T
+}
+
+pub fn very_safe_ptr_add<T>(ptr: *const T, n: usize) -> *const T {
+    (ptr.addr()+ n) as *const T
 }
 
 #[no_mangle]
@@ -57,7 +69,7 @@ impl<T> IterPtrTilNil<T> {
 impl<T> Index<usize> for IterPtrTilNil<T> {
     type Output = T;
     fn index(&self, index: usize) -> &Self::Output {
-        unsafe { &*(((self.ptr as usize) + index) as *const T) }
+        unsafe { &*(very_safe_ptr_add(self.ptr, index)) }
     }
 }
 
@@ -90,3 +102,4 @@ impl<T> Iterator for IterPtrTilNil<T> {
 pub unsafe fn pstr(s: *const u8, size: usize) {
     syscall_bind::write(1, s, size);
 }
+ 
