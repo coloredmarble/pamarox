@@ -6,6 +6,8 @@
 #![feature(lang_items)]
 #![feature(panic_info_message)]
 #![feature(strict_provenance)]
+#![feature(let_chains)]
+#![feature(unwrap_infallible)]
 
 use pipey::Pipey;
 
@@ -21,13 +23,13 @@ pub mod syscall_bind;
 #[allow(unconditional_recursion)]
 // use panicinfo after i can format
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    wawa(info);
+    wawa();
     // loopy
     panic(info);
 }
 
 #[lang = "eh_personality"]
-fn wawa(info: &core::panic::PanicInfo) {
+fn wawa() {
     unsafe {
         "\x1b[1;31mwe uhhhhh. fucked up :3\x1b[m\n"
             .pipe(|s| syscall_bind::write(2, s.as_ptr(), s.as_bytes().len()));
@@ -37,5 +39,5 @@ fn wawa(info: &core::panic::PanicInfo) {
 
 #[no_mangle]
 pub fn test_panic() {
-    panic!("fuck")
+    panic!()
 }

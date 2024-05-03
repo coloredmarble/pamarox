@@ -1,7 +1,7 @@
 use core::{mem::size_of, ops::Index};
 use pipey::Pipey;
 
-use crate::syscall_bind;
+use crate::{string, syscall_bind};
 pub type void = ();
 
 // https://stackoverflow.com/questions/29963449/golang-like-defer-in-rust
@@ -27,6 +27,16 @@ macro_rules! defer {
     )
 }
 
+#[macro_export]
+macro_rules! unwrap_or_fuck {
+    ($opt:expr,$f:tt) => {
+        match $opt{
+            Some(v) => v,
+            None => $f
+        }
+    };
+}
+
 extern "C" {
     pub fn shady_byte_deref(ptr: *const u8) -> u8;
     pub fn shady_ptr_inc(ptr: *const void);
@@ -34,10 +44,6 @@ extern "C" {
 
 pub fn very_safe_ptr_inc<T>(ptr: &mut *const T) {
     *ptr = (ptr.addr() + size_of::<T>()) as *const T
-}
-
-pub fn very_safe_ptr_add<T>(ptr: *const T, n: usize) -> *const T {
-    (ptr.addr()+ n) as *const T
 }
 
 #[no_mangle]
@@ -69,7 +75,7 @@ impl<T> IterPtrTilNil<T> {
 impl<T> Index<usize> for IterPtrTilNil<T> {
     type Output = T;
     fn index(&self, index: usize) -> &Self::Output {
-        unsafe { &*(very_safe_ptr_add(self.ptr, index)) }
+        unsafe { &*self.ptr.add(index) }
     }
 }
 
@@ -78,14 +84,6 @@ impl<T> Iterator for IterPtrTilNil<T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         unsafe {
-            /*let b = shady_byte_deref(self.ptr as *const u8);
-            if b == 0 {
-                return None;
-            } else {
-                let x = self.ptr.read();
-                self.ptr = self.ptr.offset(1);
-                Some(x)
-            }*/
             shady_byte_deref(self.ptr as *const u8).pipe(|pp| {
                 if 0 == pp {
                     None
@@ -102,4 +100,14 @@ impl<T> Iterator for IterPtrTilNil<T> {
 pub unsafe fn pstr(s: *const u8, size: usize) {
     syscall_bind::write(1, s, size);
 }
+
+#[no_mangle]
+// byte by byte
+pub unsafe fn pstr_til_nil(str: *const u8) {
+    syscall_bind::write(1, str, str.addr() + string::strlen(str));
+}
  
+pub enum Either<L,R>{
+    Left(L),
+    Right(R),
+}

@@ -1,4 +1,4 @@
-typedef unsigned long long usize; // this is my size
+typedef unsigned long usize; // this is my size
 typedef long long isize;
 typedef unsigned char u8;
 typedef char i8 ;
@@ -16,7 +16,10 @@ char* uitoa(char* str, unsigned int x);
 void test_panic();
 char* shitmap(usize);
 long brk(void* addr);
-isize pstr(const char* s, usize size);
+void pstr(const char* s, usize size);
+void pstr_til_nil(const char* s);
 usize strlen(const char *str);
 void shit_bricks(unsigned long addr[], unsigned long n);
 void* shit_alloc(usize len);
+void* malloc(usize);
+void free(void* ptr);

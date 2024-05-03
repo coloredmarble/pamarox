@@ -1,4 +1,4 @@
-## state: you can print text + make inefficient slab list alloc + implementing merge malloc
+## state: you can print text + implementing linked list malloc (not done yet)
 
 ### notes for readers
 0. **do not set optimzation level to more than 0. my guess is that optimization are meant for bins**
@@ -63,3 +63,4 @@ fn wawa(){
 10. `test` is preferable over `cmp`
 11. play ace combat 4 > 5 > 0
 12. what the fuck is a vdso
+13. default int size is u32

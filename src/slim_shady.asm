@@ -30,6 +30,22 @@ strchr:
     mov rax, rdi
     ret
 
+; rdi = dst
+; rsi = src
+; rdx = len
+; r8= tbyte
+
+global memcpy
+memcpy:
+    mov rax, rdi
+.loop:
+    test rdx, rdx
+    jz adios
+    mov r8b, byte [rsi + rdx]
+    mov byte [rdi + rdx], r8b
+    dec rdx
+    jmp memcpy
+
 ; checks if 2 strings are equal.
 ; if not equal. return s1[i] - s2[i]
 ; else 0 if reached end
@@ -38,13 +54,12 @@ strchr:
 ; al = tbyte s1
 ; r8b = tbyte s2
 ; rdx = index
-; 1 instruction for inc rdx, 2 for both strs
 ; https://github.com/Paul-Marie/minilibc/blob/master/source/strcmp.asm
 ; forward
 global strcmp
 strcmp:
     mov al, byte [rdi + rdx]
-    test al,al
+    test al, al
     jz ret_nuh
     mov r8b, byte [rsi + rdx]
     test r8b, r8b
@@ -61,7 +76,6 @@ strcmp:
     ret
 
 ; rdi = str
-; rax = len
 ; forward
 global strlen
 strlen:

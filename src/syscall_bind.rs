@@ -1,3 +1,5 @@
+use pipey::Pipey;
+
 use crate::stuff::void;
 use core::arch::asm;
 // amd64 linux
@@ -59,8 +61,8 @@ pub unsafe extern "C" fn mmap(
     syscall!(9);
 }
 
+// (void*)-1 is error val btw. they dont care about people with u64::MAX bytes of memory no more :(
 #[no_mangle]
-pub unsafe extern "C" fn brk(_addr: usize) -> usize{
+pub unsafe extern "C" fn brk(_addr: usize) -> usize {
     syscall!(12);
-} 
-
+}

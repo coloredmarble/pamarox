@@ -7,9 +7,6 @@ edition = "2021"
 pipey = {git = "https://github.com/gitretard/pipey"}
 
 [lib]
-# https://developers.redhat.com/articles/2022/09/05/how-create-c-binding-rust-library
-# to whoever that decided gcc's option syntax for linking dynamic libraries.
-# if you are unfortunately alive and not rotting 6ft underground. fuck you 
 crate-type = ["cdylib"]
 
 
