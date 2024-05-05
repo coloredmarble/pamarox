@@ -61,6 +61,6 @@ fn wawa(){
 7. [reg == 0](https://stackoverflow.com/questions/33721204/test-whether-a-register-is-zero-with-cmp-reg-0-vs-or-reg-reg/33724806#33724806)
 9. how many times can you xor?
 10. `test` is preferable over `cmp`
-11. play ace combat 4 > 5 > 0
+11.    ffff
 12. what the fuck is a vdso
 13. default int size is u32
