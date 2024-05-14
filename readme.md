@@ -1,4 +1,4 @@
-## state: you can print text + implementing linked list malloc (not done yet)
+## state: you can print text + wooo
 
 ### notes for readers
 0. **do not set optimzation level to more than 0. my guess is that optimization are meant for bins**
@@ -61,4 +61,4 @@ fn wawa(){
 10. `test` is preferable over `cmp`
 11.    ffff
 12. what the fuck is a vdso
-13. default int size is u32
+13. default int size is isize
