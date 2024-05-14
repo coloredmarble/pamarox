@@ -9,12 +9,12 @@ pipey = {git = "https://github.com/gitretard/pipey"}
 [lib]
 crate-type = ["cdylib"]
 
-
 [profile.dev]
 lto = true         
 codegen-units = 1  
 panic = 'abort'     
-strip = true      
+overflow-checks = false 
+debug = 2
 
 [profile.release]
 opt-level = 0

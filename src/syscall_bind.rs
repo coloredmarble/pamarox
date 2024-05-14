@@ -1,7 +1,7 @@
 use pipey::Pipey;
 
 use crate::stuff::void;
-use core::arch::asm;
+use core::{arch::asm, hint};
 // amd64 linux
 // too lazy to know how to import unistd.h in my rust
 macro_rules! syscall {
@@ -24,8 +24,9 @@ macro_rules! syscall_no_ret {
 // so the arguments are already in place for the syscall
 
 #[no_mangle]
-pub unsafe extern "C" fn exit(_code: i32) {
-    syscall_no_ret!(60)
+pub unsafe extern "C" fn exit(_code: i32) -> ! {
+    syscall_no_ret!(60);
+    hint::unreachable_unchecked();
 }
 
 #[no_mangle]

@@ -7,7 +7,6 @@
 3. sometime the type may be different (returning bool as i32) and treating it as such (the difference is usually inconseqeuntial) **(correct me if im wrong)** 
 4. if you are interested in reading the source code. check out `src/ctypes.rs:toascii`
 5. never use llvm assembly. trust me
-6. expect a couple errors when using cargo check. its quiet quirky :3
 8. [rust_eh_personality fix](https://stackoverflow.com/questions/75310867/rust-no-std-static-lib-panic-handler) in top answer's replies from Miaao
 7. if you have any idea how to switch to a linux target without a libc. tell me
 9. [miaao](https://stackoverflow.com/users/20028181/miiao) i fucking thank you 
@@ -48,7 +47,6 @@ fn wawa(){
 
 
 ### todos:
-0. fetch qword instead of byte
 1. impl more
 
 ### self notes:

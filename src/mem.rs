@@ -1,4 +1,5 @@
 use core::mem::{size_of, MaybeUninit};
+use core::sync::atomic::AtomicUsize;
 
 use pipey::Pipey;
 
@@ -6,10 +7,11 @@ use crate::stuff::{pstr, very_safe_ptr_inc, void, Either};
 use crate::{syscall_bind, unwrap_or_fuck};
 // C-like style
 // ignore brk errors
-// idk how to get page size at runtime. got it from my pooter
+// i am a totally resposible unsafe user
+// memory is not cleared by alloc. clear it yourself
 pub const PAGE_SIZE: usize = 4096;
+// also use as heap init point
 static mut fbrick_ptr: Option<*mut brickcell> = None;
-// static mut start_brick: brickcell;
 
 // https://www.youtube.com/watch?v=CulF4YQt6zA
 pub struct brickcell {
@@ -22,92 +24,90 @@ pub struct brickcell {
 /// extends current program heap end by l. or by whatever the fuck the kernel wants
 #[no_mangle]
 pub unsafe extern "C" fn pls_giv_moar_memowy(l: usize) -> usize {
-    syscall_bind::brk(0).pipe(|a| syscall_bind::brk(a + l))
+    syscall_bind::brk(0).tap(|a| _ = syscall_bind::brk(a.clone() + l))
 }
 
-pub unsafe extern "C" fn init_bricks(l: usize) {
+pub unsafe extern "C" fn init_brick(l: usize) -> *const brickcell {
     let fbrick = pls_giv_moar_memowy(l) as *mut brickcell;
     (*fbrick).size = l;
     // this called with alloc. which means it is already be taken
     (*fbrick).free = false;
     (*fbrick).next = None;
-    fbrick_ptr = Some(fbrick)
+    fbrick
 }
 
-// returns Either<merged head, cbrick for insertion update>
+pub unsafe fn merge_wall(head: *mut brickcell, tail: *mut brickcell) {
+    (*head).size = (tail.addr() + size_of::<brickcell>()) - (head.addr() + size_of::<brickcell>());
+    (*head).next = (*tail).next;
+}
+// this keeps returning marked non-free cells for some reason
+// returns Either<merged head, tail offset for insertion>
 pub unsafe fn recursive_brick_find_merge(
     head: *mut brickcell,
-    cbrick: *mut brickcell,
+    tail: *mut brickcell,
     accumlen: usize,
     l: usize,
-) -> Either<*const brickcell, *mut brickcell> {
-    if (*cbrick).free {
-        if (*cbrick).size >= l {
-            return Either::Left(cbrick);
+) -> Either<*mut brickcell, *mut brickcell> {
+    if (*tail).free {
+        if (*tail).size >= l {
+            (*tail).free = false;
+            return Either::Left(tail);
         }
         // merge
         if accumlen >= l {
-            (*cbrick).free = false;
-            if (*cbrick).next.is_some() {
-                (*head).next = (*cbrick).next
-            } else {
-                (*head).next = None
-            }
-            (*head).size = accumlen;
+            merge_wall(head, tail);
             (*head).free = false;
             return Either::Left(head);
         }
     }
-    // no brick too big. no dick too small
-    if (*cbrick).next.is_none() {
-        return Either::Right(cbrick);
+    match (*tail).next {
+        None => Either::Right(tail),
+        // tail is not free (fragmentation).
+        // find next free chain
+        Some(ntail) => recursive_brick_find_merge(ntail, ntail, 0, l),
     }
-    // probably overflows stack if we go too far. its a feature
-    (*cbrick).next.unwrap_unchecked().pipe(|nbrick| {
-        recursive_brick_find_merge(head, nbrick, accumlen + (nbrick.addr() - cbrick.addr()), l)
-    })
 }
-
 pub unsafe fn shove_brick(tail: *mut brickcell, l: usize) -> *const brickcell {
     let ceiling = syscall_bind::brk(0);
-    let nptrloc = tail.offset(1).add((*tail).size) as usize;
+    let nptrloc = tail.add(size_of::<brickcell>() + (*tail).size) as usize;
     if nptrloc >= ceiling {
         // generally. we dont give a fuck
         syscall_bind::brk(PAGE_SIZE + l);
     }
-    let newbptr = nptrloc as *mut brickcell;
-    (*newbptr).size = l;
-    // this called with alloc. which means it is already be taken
-    (*newbptr).free = false;
-    (*newbptr).next = None;
-    newbptr
+    (nptrloc as *mut brickcell).pipe(|newbptr| {
+        // i forgot to add this. i wasted a fucking week on giving up and playing ace combat. it was fire
+        (*tail).next = Some(newbptr);
+        (*newbptr).size = l;
+        // this called with alloc. which means it is already be taken
+        (*newbptr).free = false;
+        (*newbptr).next = None;
+        newbptr
+    })
 }
-
 pub unsafe fn alloc<T>(len: usize) -> *mut T {
-    if fbrick_ptr.is_none() {
-        init_bricks(len);
-        return fbrick_ptr.unwrap().offset(1) as *mut T;
-    }
-    (fbrick_ptr.unwrap()).pipe(|fbrick_unwrap| {
-        match recursive_brick_find_merge(fbrick_unwrap, fbrick_unwrap, 0, len) {
+    match fbrick_ptr {
+        None => (init_brick(len) as *mut brickcell).tap(|p| fbrick_ptr = Some(p.clone())),
+        Some(bk) => match recursive_brick_find_merge(bk, bk, 0, len) {
             // end of brickcell offset
-            Either::Left(brick) => return brick,
-            Either::Right(v) => shove_brick(v, size_of::<T>()),
-        }
-    }).offset(1) as *mut T
+            Either::Left(brickpnt) => brickpnt,
+            Either::Right(v) => shove_brick(v, len),
+        },
+    }
+    .add(size_of::<brickcell>()) as *mut T
 }
-
 pub unsafe fn mark_free<T>(ptr: *const T) {
     // this will be available when some guy asks for more ram
-    let cbcell = ptr.sub(size_of::<brickcell>()) as *mut brickcell;
-    (*cbcell).free = true;
+    let mfcbcell = ptr.sub(size_of::<brickcell>()) as *mut brickcell;
+    (*mfcbcell).free = true;
 }
 
+// not sure if extern blocks work with generics
+#[inline]
 #[no_mangle]
 pub unsafe extern "C" fn malloc(len: usize) -> *const void {
     alloc(len)
 }
-
+#[inline]
 #[no_mangle]
 pub unsafe extern "C" fn free(ptr: *const void) {
     mark_free(ptr)

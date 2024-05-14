@@ -12,6 +12,7 @@ int strncmp(const char* s1, const char* s2, usize len);
 int toascii(int);
 int abs(int);
 void exit(int);
+isize atoi(char* p);
 char* uitoa(char* str, unsigned int x);
 void test_panic();
 char* shitmap(usize);

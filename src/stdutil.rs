@@ -1,7 +1,7 @@
 use pipey::Pipey;
 
 // stdlib.c
-use crate::stuff::{shady_byte_deref, shady_ptr_inc, void, IterPtrTilNil};
+use crate::stuff::{pstr_til_nil, shady_byte_deref, shady_ptr_inc, void, IterPtrTilNil};
 
 // return non-negative number
 #[no_mangle]
@@ -22,6 +22,7 @@ pub extern "C" fn atoi(mut iptr: IterPtrTilNil<u8>) -> isize {
         iptr.inc()
     }
     iptr.fold(0, |n, c| {
+        unsafe {pstr_til_nil("xx!\n\0".as_ptr())};
         (10 * n) - (c & 0x0f) as isize
     })
     .pipe(|n| if ine { n } else { -n })

@@ -8,6 +8,7 @@
 #![feature(strict_provenance)]
 #![feature(let_chains)]
 #![feature(unwrap_infallible)]
+#![feature(ptr_sub_ptr)]
 
 use pipey::Pipey;
 
@@ -31,7 +32,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[lang = "eh_personality"]
 fn wawa() {
     unsafe {
-        "\x1b[1;31mwe uhhhhh. fucked up :3\x1b[m\n"
+        "\n\n\x1b[1;31mwe uhhhhh. fucked up :3\x1b[m\n"
             .pipe(|s| syscall_bind::write(2, s.as_ptr(), s.as_bytes().len()));
         syscall_bind::exit(69)
     }
